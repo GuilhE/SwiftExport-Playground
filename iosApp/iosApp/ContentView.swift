@@ -200,7 +200,8 @@ struct ContentView: View {
 
     private func getStateFlowValue() async {
         if let value = com.playground.stateFlow.value {
-            results[0] = "\(value)"
+            let data = value as! com.playground.DataClass
+            results[0] = "\(data.value)"
         } else {
             results[0] = ""
         }

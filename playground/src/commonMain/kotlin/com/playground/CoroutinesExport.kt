@@ -13,11 +13,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
-private val _stateFlow = MutableStateFlow("Hello!")
-val stateFlow: StateFlow<String> = _stateFlow.asStateFlow()
+private val _stateFlow = MutableStateFlow(DataClass("Hello!"))
+val stateFlow: StateFlow<DataClass> = _stateFlow.asStateFlow()
+
+data class DataClass(val value: String)
 
 fun updateStateFlow(newValue: String) {
-    _stateFlow.value = newValue
+    _stateFlow.value = DataClass(newValue)
 }
 
 suspend fun suspendFunction(): String {
