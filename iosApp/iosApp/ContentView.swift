@@ -1,4 +1,3 @@
-import Combine
 import ComposeApp
 import SwiftUI
 
@@ -16,11 +15,7 @@ struct ContentView: View {
                     VStack(spacing: 15) {
                         VStack(alignment: .leading, spacing: 10) {
                             HStack(spacing: 10) {
-                                Button(action: {
-                                    Task {
-                                        await getStateFlowValue()
-                                    }
-                                }) {
+                                Button(action: { Task { await getStateFlowValue() } }) {
                                     HStack {
                                         if isLoading[0] {
                                             ProgressView()
@@ -88,7 +83,7 @@ struct ContentView: View {
 
                                     if index == 2 {
                                         Button(action: {
-                                            com.playground.cancelSuspendFlowFunction()
+                                            cancelCoroutine()
                                             results[index] = "Cancelled"
                                             isLoading[index] = false
                                         }) {
@@ -115,7 +110,7 @@ struct ContentView: View {
                                     Text("Emissions:")
                                         .font(.caption)
                                         .foregroundColor(.secondary)
-                                    FlowEmissionsListView(emissions: flowEmissions)
+                                    CallbackEmissionsListView(emissions: flowEmissions)
                                 }
 
                                 if index == 3 && !asyncStreamEmissions.isEmpty {
@@ -149,7 +144,7 @@ struct ContentView: View {
         }
     }
 
-    private struct FlowEmissionsListView: View {
+    private struct CallbackEmissionsListView: View {
         let emissions: [String]
         var body: some View {
             let items: [(Int, String)] = emissions.enumerated().map { ($0.offset, $0.element) }
@@ -192,15 +187,15 @@ struct ContentView: View {
     private func getButtonTitle(for index: Int) -> String {
         switch index {
         case 1: return "suspend fun (2s delay)"
-        case 2: return "suspend fun (restart-collect)"
+        case 2: return "AsyncStream (restart-collect)"
         case 3: return "AsyncStream (infinite spawn)"
         default: return "Unknown Function"
         }
     }
 
     private func getStateFlowValue() async {
-        if let value = com.playground.stateFlow.value {
-            let data = value as! com.playground.DataClass
+        if let value = stateFlow.value {
+            let data = value as! DataClass
             results[0] = "\(data.value)"
         } else {
             results[0] = ""
@@ -216,40 +211,32 @@ struct ContentView: View {
         case 1:
             isLoading[index] = true
             let res = await com.playground.suspendFunction()
-            results[index] = res
+            results[index] = res.value
             isLoading[index] = false
 
         case 2:
             flowEmissions = []
             results[index] = "Collecting emissions..."
-            com.playground.suspendFlowFunction { value in
-                DispatchQueue.main.async {
-                    self.flowEmissions.append(value)
-                    self.results[index] = "Collected \(self.flowEmissions.count) emission(s)\nLatest: \(value)"
-                }
+            spawnCancelableCoroutine { value in
+                flowEmissions.append(value)
+                results[index] = "Collected \(self.flowEmissions.count) emission(s)\nLatest: \(value)"
             }
 
         case 3:
             asyncStreamEmissions = []
             results[index] = "Collecting emissions..."
-            Task {
-                for await value in kotlinFlowToAsyncStream(com.playground.suspendFlowFunctionSpawn) {
-                    DispatchQueue.main.async {
-                        self.asyncStreamEmissions.append(value)
-                        self.results[index] = "Collected \(self.asyncStreamEmissions.count) emission(s)\nLatest: \(value)"
-                    }
-                }
+            for await value in toAynscStream(spawnCoroutine) {
+                asyncStreamEmissions.append(value)
+                results[index] = "Collected \(asyncStreamEmissions.count) emission(s)\nLatest: \(value)"
             }
 
         default: results[index] = "Function not found"
         }
     }
 
-    private func kotlinFlowToAsyncStream(_ startFlow: (@escaping (String) -> Void) -> Void) -> AsyncStream<String> {
+    private func toAynscStream(_ callback: (@escaping (String) -> Void) -> Void) -> AsyncStream<String> {
         AsyncStream { continuation in
-            startFlow { value in
-                continuation.yield(value)
-            }
+            callback { value in continuation.yield(value) }
         }
     }
 }

@@ -13,13 +13,10 @@ kotlin {
 
     swiftExport {
         moduleName = "ComposeApp"
-        //https://youtrack.jetbrains.com/issue/KT-81270/K-N-Build-fails-when-exposing-suspend-functions#focus=Comments-27-12735527.0-0
-        //flattenPackage = "com.playground"
-        configure {
-            settings.put(SWIFT_EXPORT_COROUTINES_SUPPORT_TURNED_ON, "true")
-        }
+        flattenPackage = "com.playground"
+        configure { settings.put(SWIFT_EXPORT_COROUTINES_SUPPORT_TURNED_ON, "true") }
     }
-    
+
     sourceSets {
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)

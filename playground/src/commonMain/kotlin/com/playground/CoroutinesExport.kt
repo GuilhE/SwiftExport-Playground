@@ -13,51 +13,47 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
+data class DataClass(val value: String)
+
 private val _stateFlow = MutableStateFlow(DataClass("Hello!"))
 val stateFlow: StateFlow<DataClass> = _stateFlow.asStateFlow()
-
-data class DataClass(val value: String)
 
 fun updateStateFlow(newValue: String) {
     _stateFlow.value = DataClass(newValue)
 }
 
-suspend fun suspendFunction(): String {
+suspend fun suspendFunction(): DataClass {
     delay(2000)
-    return "Hello from suspend fun"
+    return DataClass("Hello from suspend fun")
 }
 
-fun suspendFlowFunction(): Flow<String> {
+fun flowCreator(): Flow<DataClass> {
     return flow {
-        emit("Hello!")
+        emit(DataClass("Hello!"))
         delay(1000)
-        emit("SwiftExport")
+        emit(DataClass("SwiftExport"))
         delay(1000)
-        emit("Coroutines")
+        emit(DataClass("Coroutines"))
         delay(1000)
-        emit("Are here!")
+        emit(DataClass("Are here!"))
     }
 }
 
 private var flowJob: Job? = null
-fun suspendFlowFunction(callback: (String) -> Unit) {
-    cancelSuspendFlowFunction()
+fun spawnCancelableCoroutine(callback: (String) -> Unit) {
+    cancelCoroutine()
     flowJob = CoroutineScope(Dispatchers.Default).launch(Dispatchers.Main) {
-        suspendFlowFunction().collect { value ->
-            callback(value)
-        }
+        flowCreator().collect { callback(it.value) }
     }
 }
 
-fun cancelSuspendFlowFunction() {
+fun cancelCoroutine() {
     flowJob?.cancel()
     flowJob = null
 }
 
-fun suspendFlowFunctionSpawn(callback: (String) -> Unit) {
+fun spawnCoroutine(callback: (String) -> Unit) {
     CoroutineScope(Dispatchers.Default).launch(Dispatchers.Main) {
-        suspendFlowFunction().collect { value ->
-            callback(value)
-        }
+        flowCreator().collect { callback(it.value) }
     }
 }
