@@ -22,12 +22,20 @@ fun updateStateFlow(newValue: String) {
     _stateFlow.value = DataClass(newValue)
 }
 
+private var collectJob: Job? = null
+fun flowCollector(callback: (String) -> Unit) {
+    collectJob?.cancel().also { collectJob = null }
+    collectJob = CoroutineScope(Dispatchers.Default).launch(Dispatchers.Main) {
+        stateFlow.collect { callback(it.value) }
+    }
+}
+
 suspend fun suspendFunction(): DataClass {
     delay(2000)
     return DataClass("Hello from suspend fun")
 }
 
-fun flowCreator(): Flow<DataClass> {
+private fun flowCreator(): Flow<DataClass> {
     return flow {
         emit(DataClass("Hello!"))
         delay(1000)
