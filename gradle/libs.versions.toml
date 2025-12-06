@@ -1,8 +1,5 @@
 [versions]
-android-compileSdk = "36"
-android-minSdk = "24"
-android-targetSdk = "36"
-kotlin = "2.3.20-dev-2147"
+kotlin = "2.3.20-dev-6091"
 kotlinxCoroutines = "1.10.2"
 
 [libraries]

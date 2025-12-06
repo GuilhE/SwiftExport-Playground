@@ -8,6 +8,7 @@ struct ContentView: View {
     @State private var flowEmissions: [String] = []
     @State private var callbackEmissions: [String] = []
     @State private var asyncStreamEmissions: [String] = []
+    @State private var suspendTask: Task<Void, Never>?
 
     private var animationTrigger: Int {
         results.hashValue ^
@@ -24,7 +25,11 @@ struct ContentView: View {
                         VStack(spacing: 15) {
                             VStack(alignment: .leading, spacing: 10) {
                                 HStack(spacing: 10) {
-                                    Button(action: { Task { await getStateFlowValue() } }) {
+                                    Button(action: {
+                                        Task {
+                                            await getStateFlowValue()
+                                        }
+                                    }) {
                                         HStack {
                                             if isLoading[0] {
                                                 ProgressView()
@@ -39,7 +44,11 @@ struct ContentView: View {
                                     }
                                     .disabled(isLoading[0])
 
-                                    Button(action: { Task { await updateStateFlow() } }) {
+                                    Button(action: {
+                                        Task {
+                                            await updateStateFlow()
+                                        }
+                                    }) {
                                         HStack {
                                             Text("Update StateFlow")
                                             Spacer()
@@ -63,10 +72,14 @@ struct ContentView: View {
                             }
                             .padding(.horizontal)
 
-                            ForEach(0 ..< 4, id: \.self) { index in
+                            ForEach(0..<4, id: \.self) { index in
                                 VStack(alignment: .leading, spacing: 10) {
                                     HStack(spacing: 10) {
-                                        Button(action: { Task { await coroutines(index: index) } }) {
+                                        Button(action: {
+                                            Task {
+                                                await coroutines(index: index)
+                                            }
+                                        }) {
                                             HStack {
                                                 if isLoading[index] {
                                                     ProgressView().scaleEffect(0.8)
@@ -79,6 +92,17 @@ struct ContentView: View {
                                             .cornerRadius(10)
                                         }
                                         .disabled(isLoading[index])
+
+                                        if index == 1 {
+                                            Button(action: { suspendTask?.cancel() }) {
+                                                HStack {
+                                                    Text("Cancel")
+                                                }
+                                                .padding()
+                                                .background(Color.red.opacity(0.1))
+                                                .cornerRadius(10)
+                                            }
+                                        }
 
                                         if index == 2 {
                                             Button(action: {
@@ -152,21 +176,13 @@ struct ContentView: View {
         }
     }
 
-    private func getButtonTitle(for index: Int) -> String {
-        switch index {
-        case 0: return "Collect StateFlow"
-        case 1: return "suspend fun (2s delay)"
-        case 2: return "AsyncStream (restart-collect)"
-        case 3: return "AsyncStream (infinite spawn)"
-        default: return "Unknown Function"
-        }
-    }
-
     private struct EmissionsListView: View {
         let emissions: [String]
         let color: Color
         var body: some View {
-            let items: [(Int, String)] = emissions.enumerated().map { ($0.offset, $0.element) }
+            let items: [(Int, String)] = emissions.enumerated().map {
+                ($0.offset, $0.element)
+            }
             VStack(alignment: .leading, spacing: 4) {
                 ForEach(items, id: \.0) { item in
                     Text("\(item.0 + 1). \(item.1)")
@@ -199,13 +215,23 @@ struct ContentView: View {
     private func coroutines(index: Int) async {
         switch index {
         case 0:
-            flowCollector { value in flowEmissions.append(value) }
+            flowCollector { value in
+                flowEmissions.append(value)
+            }
 
         case 1:
             isLoading[index] = true
-            let res = await suspendFunction()
-            results[index] = res.value
-            isLoading[index] = false
+            suspendTask?.cancel()
+            suspendTask = Task {
+                do {
+                    let res = try await suspendFunction()
+                    results[index] = res.value
+                    isLoading[index] = false
+                } catch {
+                    results[index] = "Failed with: \(error)"
+                    isLoading[index] = false
+                }
+            }
 
         case 2:
             callbackEmissions = []
@@ -229,8 +255,20 @@ struct ContentView: View {
 
     private func toAsyncStream(_ callback: (@escaping (String) -> Void) -> Void) -> AsyncStream<String> {
         AsyncStream { continuation in
-            callback { value in continuation.yield(value) }
+            callback { value in
+                continuation.yield(value)
+            }
         }
+    }
+}
+
+private func getButtonTitle(for index: Int) -> String {
+    switch index {
+    case 0: return "Collect StateFlow"
+    case 1: return "suspend fun (2s delay)"
+    case 2: return "AsyncStream (restart-collect)"
+    case 3: return "AsyncStream (infinite spawn)"
+    default: return "Unknown Function"
     }
 }
 
