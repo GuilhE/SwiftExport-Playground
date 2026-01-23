@@ -1,3 +1,4 @@
+@file:Suppress("UnstableApiUsage")
 
 pluginManagement {
     repositories {
@@ -6,6 +7,10 @@ pluginManagement {
         gradlePluginPortal()
         maven("https://redirector.kotlinlang.org/maven/dev")
     }
+}
+
+plugins {
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 dependencyResolutionManagement {

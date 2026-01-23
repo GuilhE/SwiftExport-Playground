@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
+class UpsException : Exception("Ups! Something went wrong.")
+
 data class DataClass(val value: String)
 
 private val _stateFlow = MutableStateFlow(DataClass("Hello!"))
@@ -32,7 +34,11 @@ fun flowCollector(callback: (String) -> Unit) {
 
 suspend fun suspendFunction(): DataClass {
     delay(2000)
-    return DataClass("Hello from suspend fun")
+    return if ((0..1).random() < 0.5) {
+        DataClass("Hello from suspend fun")
+    } else {
+        throw UpsException()
+    }
 }
 
 private fun flowCreator(): Flow<DataClass> {
