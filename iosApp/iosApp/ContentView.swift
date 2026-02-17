@@ -6,15 +6,15 @@ struct ContentView: View {
     @State private var isLoading: [Bool] = [false, false, false, false]
     @State private var stateFlowValue: String = ""
     @State private var flowEmissions: [String] = []
-    @State private var callbackEmissions: [String] = []
-    @State private var asyncStreamEmissions: [String] = []
+    @State private var cancelableFlowEmission: [String] = []
+    @State private var infiniteFlowEmission: [String] = []
     @State private var suspendTask: Task<Void, Never>?
 
     private var animationTrigger: Int {
         results.hashValue ^
             flowEmissions.hashValue ^
-            callbackEmissions.hashValue ^
-            asyncStreamEmissions.hashValue
+            cancelableFlowEmission.hashValue ^
+            infiniteFlowEmission.hashValue
     }
 
     var body: some View {
@@ -27,7 +27,7 @@ struct ContentView: View {
                                 HStack(spacing: 10) {
                                     Button(action: {
                                         Task {
-                                            await getStateFlowValue()
+                                            await coroutines(index: 0)
                                         }
                                     }) {
                                         HStack {
@@ -35,7 +35,7 @@ struct ContentView: View {
                                                 ProgressView()
                                                     .scaleEffect(0.8)
                                             }
-                                            Text("Get StateFlow")
+                                            Text("Flow")
                                             Spacer()
                                         }
                                         .padding()
@@ -50,12 +50,25 @@ struct ContentView: View {
                                         }
                                     }) {
                                         HStack {
-                                            Text("Update StateFlow")
+                                            Text("Update")
                                             Spacer()
                                         }
                                         .padding()
                                         .background(Color.green.opacity(0.1))
                                         .cornerRadius(10)
+                                    }
+
+                                    if isLoading[0] {
+                                        Button(action: {
+                                            suspendTask?.cancel()
+                                            results[0] = "Stopped observing"
+                                            isLoading[0] = false
+                                        }) {
+                                            Text("Stop")
+                                                .padding()
+                                                .background(Color.red.opacity(0.1))
+                                                .cornerRadius(10)
+                                        }
                                     }
                                 }
 
@@ -69,10 +82,17 @@ struct ContentView: View {
                                         .cornerRadius(8)
                                         .font(.system(.body, design: .monospaced))
                                 }
+
+                                if !flowEmissions.isEmpty {
+                                    Text("Emissions:")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    EmissionsListView(emissions: flowEmissions, color: Color.red)
+                                }
                             }
                             .padding(.horizontal)
 
-                            ForEach(0..<4, id: \.self) { index in
+                            ForEach(1..<4, id: \.self) { index in
                                 VStack(alignment: .leading, spacing: 10) {
                                     HStack(spacing: 10) {
                                         Button(action: {
@@ -137,18 +157,18 @@ struct ContentView: View {
                                         EmissionsListView(emissions: flowEmissions, color: Color.red)
                                     }
 
-                                    if index == 2 && !callbackEmissions.isEmpty {
+                                    if index == 2 && !cancelableFlowEmission.isEmpty {
                                         Text("Emissions:")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
-                                        EmissionsListView(emissions: callbackEmissions, color: Color.green)
+                                        EmissionsListView(emissions: cancelableFlowEmission, color: Color.green)
                                     }
 
-                                    if index == 3 && !asyncStreamEmissions.isEmpty {
+                                    if index == 3 && !infiniteFlowEmission.isEmpty {
                                         Text("Emissions:")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
-                                        EmissionsListView(emissions: asyncStreamEmissions, color: Color.orange)
+                                        EmissionsListView(emissions: infiniteFlowEmission, color: Color.orange)
                                     }
                                 }
                                 .padding(.horizontal)
@@ -165,8 +185,8 @@ struct ContentView: View {
                             results = ["", "", "", ""]
                             stateFlowValue = ""
                             flowEmissions = []
-                            callbackEmissions = []
-                            asyncStreamEmissions = []
+                            cancelableFlowEmission = []
+                            infiniteFlowEmission = []
                         }) {
                             Image(systemName: "trash").foregroundColor(.red)
                         }
@@ -199,15 +219,6 @@ struct ContentView: View {
         }
     }
 
-    private func getStateFlowValue() async {
-        if let value = stateFlow.value {
-            let data = value as! DataClass
-            results[0] = "\(data.value)"
-        } else {
-            results[0] = ""
-        }
-    }
-
     private func updateStateFlow() async {
         com.playground.updateStateFlow(newValue: "Updated at \(Int(Date().timeIntervalSince1970))")
     }
@@ -215,8 +226,21 @@ struct ContentView: View {
     private func coroutines(index: Int) async {
         switch index {
         case 0:
-            flowCollector { value in
-                flowEmissions.append(value)
+            flowEmissions = []
+            results[0] = "Observing StateFlow..."
+            isLoading[0] = true
+            suspendTask?.cancel()
+            suspendTask = Task {
+                do {
+                    for try await value in observeStateFlow() {
+                        flowEmissions.append(value.value)
+                        results[0] = "Collected \(self.flowEmissions.count) emission(s)\nLatest: \(value.value)"
+                    }
+                    isLoading[0] = false
+                } catch {
+                    results[0] = "Failed with: \(error)"
+                    isLoading[0] = false
+                }
             }
 
         case 1:
@@ -234,24 +258,24 @@ struct ContentView: View {
             }
 
         case 2:
-            callbackEmissions = []
+            cancelableFlowEmission = []
             results[index] = "Collecting emissions..."
             do {
                 for try await value in createCancelableFlow() {
-                    callbackEmissions.append(value.value)
-                    results[index] = "Collected \(self.callbackEmissions.count) emission(s)\nLatest: \(value.value)"
+                    cancelableFlowEmission.append(value.value)
+                    results[index] = "Collected \(self.cancelableFlowEmission.count) emission(s)\nLatest: \(value.value)"
                 }
             } catch {
                 results[index] = "Failed with: \(error)"
             }
 
         case 3:
-            asyncStreamEmissions = []
+            infiniteFlowEmission = []
             results[index] = "Collecting emissions..."
             do {
                 for try await value in createFlow() {
-                    asyncStreamEmissions.append(value.value)
-                    results[index] = "Collected \(asyncStreamEmissions.count) emission(s)\nLatest: \(value.value)"
+                    infiniteFlowEmission.append(value.value)
+                    results[index] = "Collected \(infiniteFlowEmission.count) emission(s)\nLatest: \(value.value)"
                 }
             } catch {
                 results[index] = "Failed with: \(error)"
@@ -264,10 +288,9 @@ struct ContentView: View {
 
 private func getButtonTitle(for index: Int) -> String {
     switch index {
-    case 0: return "Collect StateFlow"
     case 1: return "suspend fun (2s delay)"
-    case 2: return "AsyncStream (restart-collect)"
-    case 3: return "AsyncStream (infinite spawn)"
+    case 2: return "Flow (restart-collect)"
+    case 3: return "Flow (infinite spawn)"
     default: return "Unknown Function"
     }
 }

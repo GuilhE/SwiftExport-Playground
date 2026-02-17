@@ -19,18 +19,11 @@ class UpsException : Exception("Ups! Something went wrong.")
 data class DataClass(val value: String)
 
 private val _stateFlow = MutableStateFlow(DataClass("Hello!"))
-val stateFlow: StateFlow<DataClass> = _stateFlow.asStateFlow()
+
+fun observeStateFlow(): Flow<DataClass> = _stateFlow.asStateFlow()
 
 fun updateStateFlow(newValue: String) {
     _stateFlow.value = DataClass(newValue)
-}
-
-private var collectJob: Job? = null
-fun flowCollector(callback: (String) -> Unit) {
-    collectJob?.cancel().also { collectJob = null }
-    collectJob = CoroutineScope(Dispatchers.Default).launch(Dispatchers.Main) {
-        stateFlow.collect { callback(it.value) }
-    }
 }
 
 suspend fun suspendFunction(): DataClass {
