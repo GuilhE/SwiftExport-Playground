@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 
@@ -41,7 +42,7 @@ suspend fun suspendFunction(): DataClass {
     }
 }
 
-private fun flowCreator(): Flow<DataClass> {
+fun createFlow(): Flow<DataClass> {
     return flow {
         emit(DataClass("Hello!"))
         delay(1000)
@@ -54,20 +55,12 @@ private fun flowCreator(): Flow<DataClass> {
 }
 
 private var flowJob: Job? = null
-fun spawnCancelableCoroutine(callback: (String) -> Unit) {
-    cancelCoroutine()
-    flowJob = CoroutineScope(Dispatchers.Default).launch(Dispatchers.Main) {
-        flowCreator().collect { callback(it.value) }
-    }
+fun createCancelableFlow(): Flow<DataClass> {
+    cancelFlow()
+    return channelFlow { flowJob = launch { createFlow().collect { value -> send(value) } } }
 }
 
-fun cancelCoroutine() {
+fun cancelFlow() {
     flowJob?.cancel()
     flowJob = null
-}
-
-fun spawnCoroutine(callback: (String) -> Unit) {
-    CoroutineScope(Dispatchers.Default).launch(Dispatchers.Main) {
-        flowCreator().collect { callback(it.value) }
-    }
 }

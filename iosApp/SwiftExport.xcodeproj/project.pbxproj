@@ -152,7 +152,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :playground:embedSwiftExportForXcode --no-build-cache\n";
+			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :playground:embedSwiftExportForXcode";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -106,7 +106,7 @@ struct ContentView: View {
 
                                         if index == 2 {
                                             Button(action: {
-                                                cancelCoroutine()
+                                                cancelFlow()
                                                 results[index] = "Cancelled"
                                                 isLoading[index] = false
                                             }) {
@@ -236,28 +236,28 @@ struct ContentView: View {
         case 2:
             callbackEmissions = []
             results[index] = "Collecting emissions..."
-            spawnCancelableCoroutine { value in
-                callbackEmissions.append(value)
-                results[index] = "Collected \(self.callbackEmissions.count) emission(s)\nLatest: \(value)"
+            do {
+                for try await value in createCancelableFlow() {
+                    callbackEmissions.append(value.value)
+                    results[index] = "Collected \(self.callbackEmissions.count) emission(s)\nLatest: \(value.value)"
+                }
+            } catch {
+                results[index] = "Failed with: \(error)"
             }
 
         case 3:
             asyncStreamEmissions = []
             results[index] = "Collecting emissions..."
-            for await value in toAsyncStream(spawnCoroutine) {
-                asyncStreamEmissions.append(value)
-                results[index] = "Collected \(asyncStreamEmissions.count) emission(s)\nLatest: \(value)"
+            do {
+                for try await value in createFlow() {
+                    asyncStreamEmissions.append(value.value)
+                    results[index] = "Collected \(asyncStreamEmissions.count) emission(s)\nLatest: \(value.value)"
+                }
+            } catch {
+                results[index] = "Failed with: \(error)"
             }
 
         default: results[index] = "Function not found"
-        }
-    }
-
-    private func toAsyncStream(_ callback: (@escaping (String) -> Void) -> Void) -> AsyncStream<String> {
-        AsyncStream { continuation in
-            callback { value in
-                continuation.yield(value)
-            }
         }
     }
 }
