@@ -2,13 +2,10 @@
 
 package com.playground
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
@@ -23,7 +20,9 @@ private val _stateFlow = MutableStateFlow(DataClass("Hello!"))
 fun observeStateFlow(): Flow<DataClass> = _stateFlow.asStateFlow()
 
 fun updateStateFlow(newValue: String) {
+    println("🔄 updateStateFlow() called with value: $newValue")
     _stateFlow.value = DataClass(newValue)
+    println("✓ StateFlow updated")
 }
 
 suspend fun suspendFunction(): DataClass {
