@@ -20,9 +20,7 @@ private val _stateFlow = MutableStateFlow(DataClass("Hello!"))
 fun observeStateFlow(): Flow<DataClass> = _stateFlow.asStateFlow()
 
 fun updateStateFlow(newValue: String) {
-    println("🔄 updateStateFlow() called with value: $newValue")
     _stateFlow.value = DataClass(newValue)
-    println("✓ StateFlow updated")
 }
 
 suspend fun suspendFunction(): DataClass {
