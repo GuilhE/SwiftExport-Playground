@@ -13,16 +13,14 @@ import kotlinx.coroutines.launch
 
 class UpsException : Exception("Ups! Something went wrong.")
 
-data class DataClass(val value: String)
-
+interface Data { val value: String }
+data class DataClass(override val value: String): Data
 private val _stateFlow = MutableStateFlow(DataClass("Hello!"))
 
-fun observeStateFlow(): Flow<DataClass> = _stateFlow.asStateFlow()
+fun observeStateFlow(): Flow<Data> = _stateFlow.asStateFlow()
 
 fun updateStateFlow(newValue: String) {
-    println("🔄 updateStateFlow() called with value: $newValue")
     _stateFlow.value = DataClass(newValue)
-    println("✓ StateFlow updated")
 }
 
 suspend fun suspendFunction(): DataClass {
