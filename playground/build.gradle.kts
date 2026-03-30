@@ -11,7 +11,7 @@ kotlin {
     iosSimulatorArm64()
 
     swiftExport {
-        moduleName = "ComposeApp"
+        moduleName = "Coroutines"
         flattenPackage = "com.playground"
     }
 

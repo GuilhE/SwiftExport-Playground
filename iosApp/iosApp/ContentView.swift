@@ -1,4 +1,4 @@
-import ComposeApp
+import Coroutines
 import SwiftUI
 
 struct ContentView: View {
@@ -232,7 +232,7 @@ struct ContentView: View {
             suspendTask?.cancel()
             suspendTask = Task {
                 do {
-                    for try await value in observeStateFlow() {
+                    for try await value in observeStateFlow().asAsyncSequence() {
                         flowEmissions.append(value.value)
                         results[0] = "Collected \(self.flowEmissions.count) emission(s)\nLatest: \(value.value)"
                     }
@@ -261,7 +261,7 @@ struct ContentView: View {
             cancelableFlowEmission = []
             results[index] = "Collecting emissions..."
             do {
-                for try await value in createCancelableFlow() {
+                for try await value in createCancelableFlow().asAsyncSequence() {
                     cancelableFlowEmission.append(value.value)
                     results[index] = "Collected \(self.cancelableFlowEmission.count) emission(s)\nLatest: \(value.value)"
                 }
@@ -273,7 +273,7 @@ struct ContentView: View {
             infiniteFlowEmission = []
             results[index] = "Collecting emissions..."
             do {
-                for try await value in createFlow() {
+                for try await value in createFlow().asAsyncSequence() {
                     infiniteFlowEmission.append(value.value)
                     results[index] = "Collected \(infiniteFlowEmission.count) emission(s)\nLatest: \(value.value)"
                 }
