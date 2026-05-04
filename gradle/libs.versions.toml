@@ -1,6 +1,5 @@
 [versions]
-kotlin = "2.4.0-dev-8268"
-#kotlin = "2.4.0-Beta1-52"
+kotlin = "2.4.0-Beta2"
 kotlinxCoroutines = "1.10.2"
 
 [libraries]
