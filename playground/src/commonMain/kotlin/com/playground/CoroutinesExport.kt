@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class UpsException : Exception("Ups! Something went wrong.")
 
@@ -31,7 +32,7 @@ fun updateStateFlow(newValue: String) {
 }
 
 suspend fun suspendFunction(): DataClass {
-    delay(2000)
+    delay(2000.milliseconds)
     return if ((0..1).random() < 0.5) {
         DataClass("Hello from suspend fun")
     } else {
@@ -42,11 +43,11 @@ suspend fun suspendFunction(): DataClass {
 fun createFlow(): Flow<DataClass> =
     flow {
         emit(DataClass("Hello!"))
-        delay(1000)
+        delay(1000.milliseconds)
         emit(DataClass("SwiftExport"))
-        delay(1000)
+        delay(1000.milliseconds)
         emit(DataClass("Coroutines"))
-        delay(1000)
+        delay(1000.milliseconds)
         emit(DataClass("Are here!"))
     }
 
