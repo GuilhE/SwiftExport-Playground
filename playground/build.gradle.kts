@@ -11,7 +11,7 @@ kotlin {
     iosSimulatorArm64()
 
     swiftExport {
-        moduleName = "Coroutines"
+        moduleName = "KotlinToSwift"
         flattenPackage = "com.playground"
     }
 
