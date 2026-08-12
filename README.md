@@ -1,4 +1,2 @@
 # SwiftExport playground
-
-
-https://github.com/user-attachments/assets/030b277c-56a8-4d7b-876d-a436866dd6b0
+https://github.com/user-attachments/assets/0abd5a2e-d795-4b0a-b204-8e8aa9f29e96
