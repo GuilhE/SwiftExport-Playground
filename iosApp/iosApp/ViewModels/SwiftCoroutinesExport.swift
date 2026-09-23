@@ -55,6 +55,8 @@ func runCrossLanguageInheritanceProbe() async {
     //     Uncaught Kotlin exception: kotlin.ClassCastException: class SwiftCoroutinesExport
     //     cannot be cast to class com.playground.CoroutinesExport
     // So this looks like a regression in the 2.5.0 dev/beta channel, not a fundamental limitation.
+    //
+    // To test it uncomment the `runCrossLanguageInheritanceProbe()` call in `ContentView.swift` and run the app.
     if let result = try? await describeCoroutinesExport(contract: contract) {
         print("[cross-language inheritance] \(result)")
     }
