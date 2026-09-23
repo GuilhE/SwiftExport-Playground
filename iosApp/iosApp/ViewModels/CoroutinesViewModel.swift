@@ -1,11 +1,13 @@
 import Foundation
-import KotlinToSwift
+@preconcurrency import KotlinToSwift
 import Observation
 import SwiftUI
 
 @MainActor
 @Observable
 final class CoroutinesViewModel {
+    private let coroutine: any CoroutinesExport
+
     var results: [String] = ["", "", "", ""]
     var isLoading: [Bool] = [false, false, false, false]
     var flowEmissions: [String] = []
@@ -17,6 +19,10 @@ final class CoroutinesViewModel {
     /// already wrote a friendly "Cancelled"/"Stopped" message, so the loop's `catch` block
     /// must not race it with a later "Failed with: CancellationError()" overwrite.
     private var suppressedFailureIndices: Set<Int> = []
+
+    init() {
+        coroutine = coroutinesExport()
+    }
 
     func reset() {
         animated {
@@ -38,7 +44,7 @@ final class CoroutinesViewModel {
     }
 
     func updateStateFlowValue() {
-        updateStateFlow(newValue: "Updated at \(Int(Date().timeIntervalSince1970))")
+        coroutine.updateStateFlow(newValue: "Updated at \(Int(Date().timeIntervalSince1970))")
     }
 
     func stopObservingStateFlow() {
@@ -61,7 +67,7 @@ final class CoroutinesViewModel {
 
     func cancelCancelableFlow() {
         suppressedFailureIndices.insert(2)
-        cancelFlow()
+        coroutine.cancelFlow()
         animated {
             results[2] = "Cancelled"
             isLoading[2] = false
@@ -77,7 +83,7 @@ final class CoroutinesViewModel {
         }
         suspendTask = Task {
             do {
-                for try await value in observeStateFlow().asAsyncSequence() {
+                for try await value in coroutine.observeStateFlow().asAsyncSequence() {
                     animated {
                         flowEmissions.append(value.value)
                         results[0] = "Collected \(flowEmissions.count) emission(s)\nLatest: \(value.value)"
@@ -99,7 +105,7 @@ final class CoroutinesViewModel {
         animated { isLoading[1] = true }
         suspendTask = Task {
             do {
-                let value = try await suspendFunction()
+                let value = try await coroutine.suspendFunction()
                 animated {
                     results[1] = value.value
                     isLoading[1] = false
@@ -120,7 +126,7 @@ final class CoroutinesViewModel {
             results[2] = "Collecting emissions..."
         }
         do {
-            for try await value in createCancelableFlow().asAsyncSequence() {
+            for try await value in coroutine.createCancelableFlow().asAsyncSequence() {
                 animated {
                     cancelableFlowEmission.append(value.value)
                     results[2] = "Collected \(cancelableFlowEmission.count) emission(s)\nLatest: \(value.value)"
@@ -138,7 +144,7 @@ final class CoroutinesViewModel {
             results[3] = "Collecting emissions..."
         }
         do {
-            for try await value in createFlow().asAsyncSequence() {
+            for try await value in coroutine.createFlow().asAsyncSequence() {
                 animated {
                     infiniteFlowEmission.append(value.value)
                     results[3] = "Collected \(infiniteFlowEmission.count) emission(s)\nLatest: \(value.value)"
