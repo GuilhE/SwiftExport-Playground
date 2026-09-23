@@ -49,3 +49,34 @@ final class SwiftCoroutinesExport: KotlinRuntime.KotlinBase, CoroutinesExport {
 // one exists (`@BindReverseBridgeToMethod`, `..._reverse_swift` symbols, used e.g. by the built-in
 // `KotlinTask`/`SwiftJob` bridge for cancellation) — but nothing public exposes a way to mint that
 // backing native object for an arbitrary interface today.
+
+// MARK: - Experiment: force some kind of init anyway?
+//
+// Attempt: bind to a REAL, already-existing native Kotlin object's ref (borrowed from a genuine
+// `coroutinesExport()` instance) via `.asBoundBridge`, instead of trying to conjure a ref out of
+// nothing:
+//
+//     extension SwiftCoroutinesExport {
+//         convenience init(rebinding donor: any CoroutinesExport) {
+//             self.init(__externalRCRefUnsafe: donor.__externalRCRef(), options: .asBoundBridge)
+//         }
+//     }
+//     let forced = SwiftCoroutinesExport(rebinding: coroutinesExport())
+//
+// This COMPILES. But it's not actually useful even if it didn't crash: `.asBoundBridge` binds a
+// *second*, independent Swift wrapper to a ref that's already wrapped by the object returned from
+// `coroutinesExport()`. Calling `forced.suspendFunction()` would only run OUR override *locally in
+// Swift* — passing `forced` back into a Kotlin function wouldn't route through it at all, since
+// Kotlin only ever sees the original native object and calls its own real implementation. So even
+// in the best case this is a cosmetic, local-only trick, not genuine two-way interop.
+//
+// It doesn't even get that far, though — it crashes immediately at runtime with a Kotlin/Native
+// runtime assertion:
+//
+//     runtime assert: Newly created Kotlin object for bound bridge type should never have an
+//     associated object. Please submit a bug report.
+//
+// The Kotlin/Native runtime enforces a strict 1:1 relationship between a native ref and its Swift
+// wrapper. `donor` already has one (the object `coroutinesExport()` returned); asking for a second,
+// independent wrapper class (`SwiftCoroutinesExport`) around that same ref violates that invariant
+// and aborts the process. There's no supported way around this — confirmed dead end.
