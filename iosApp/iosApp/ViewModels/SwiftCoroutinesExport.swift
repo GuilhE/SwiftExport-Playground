@@ -1,4 +1,3 @@
-import KotlinRuntime
 import KotlinToSwift
 
 // MARK: - Can Swift implement a Kotlin interface (Flow-returning or not)?
@@ -7,76 +6,56 @@ import KotlinToSwift
 // implements and `CoroutinesViewModel` (Swift) already consumes — just tried in the opposite
 // direction: Swift implementing it instead of consuming it.
 //
-// NOT POSSIBLE with the current toolchain (Kotlin 2.5.0-Beta1-73 / kotlinx.coroutines 1.10.2), for
-// ANY user-defined interface — not just Flow-returning members. The blocker is generic:
-//
-// Every Swift Export protocol for a Kotlin interface requires the conforming type to inherit from
-// `KotlinRuntime.KotlinBase`. A class that explicitly subclasses `KotlinBase` CAN satisfy the
-// protocol at the declaration level (this compiles fine, `suspendFunction` included):
+// Earlier attempts failed: subclassing `KotlinRuntime.KotlinBase` directly compiles but can never
+// be instantiated (`init()` is unavailable), and rebinding to an existing donor ref via
+// `.asBoundBridge` crashes at runtime. The missing piece, per
+// https://kotlinlang.org/docs/native-swift-export.html#cross-language-inheritance: Swift must
+// subclass a Kotlin-declared `open class` (`SwiftBase`, in `CoroutinesExport.kt`), not `KotlinBase`
+// itself — only a concrete, instantiable Kotlin class gets a public allocator generated for it.
 
-final class SwiftCoroutinesExport: KotlinRuntime.KotlinBase, CoroutinesExport {
+final class SwiftCoroutinesExport: SwiftBase, CoroutinesExport {
     func observeStateFlow() -> any KotlinCoroutineSupport.KotlinTypedStateFlow<any KotlinToSwift.Data> {
-        fatalError("unreachable — see the instantiation note below")
+        fatalError("not exercised by this probe")
     }
 
-    func updateStateFlow(newValue: String) {}
+    func updateStateFlow(newValue: String) {
+        fatalError("not exercised by this probe")
+    }
 
     func suspendFunction() async throws -> any KotlinToSwift.Data {
         DataClass(value: "Hello from Swift")
     }
 
     func createFlow() -> any KotlinCoroutineSupport.KotlinTypedFlow<any KotlinToSwift.Data> {
-        fatalError("unreachable — see the instantiation note below")
+        fatalError("not exercised by this probe")
     }
 
     func createCancelableFlow() -> any KotlinCoroutineSupport.KotlinTypedFlow<any KotlinToSwift.Data> {
-        fatalError("unreachable — see the instantiation note below")
+        fatalError("not exercised by this probe")
     }
 
-    func cancelFlow() {}
+    func cancelFlow() {
+        fatalError("not exercised by this probe")
+    }
 }
 
-// ...but it can never be INSTANTIATED. `KotlinBase`'s plain `init()` is `NS_UNAVAILABLE`, and its
-// only usable initializer, `init(__externalRCRefUnsafe:options:)`, requires a pointer to an
-// *already-existing* native Kotlin object. Unlike concrete Kotlin classes (e.g. `DataClass`, which
-// gets a public `com_playground_DataClass_init_allocate()` you can call), there is no generated
-// "allocate a fresh native shell" function for a user-defined interface — Kotlin interfaces aren't
-// directly instantiable on the Kotlin side either, so nothing exists to bind to. Concretely:
-//
-//let contract = SwiftCoroutinesExport()   // error: 'init()' is unavailable
-//
-// Swift Export *does* generate the reverse-dispatch plumbing to call back into a Swift object once
-// one exists (`@BindReverseBridgeToMethod`, `..._reverse_swift` symbols, used e.g. by the built-in
-// `KotlinTask`/`SwiftJob` bridge for cancellation) — but nothing public exposes a way to mint that
-// backing native object for an arbitrary interface today.
+@MainActor
+func runCrossLanguageInheritanceProbe() async {
+    let contract = SwiftCoroutinesExport()
 
-// MARK: - Experiment: force some kind of init anyway?
-//
-// Attempt: bind to a REAL, already-existing native Kotlin object's ref (borrowed from a genuine
-// `coroutinesExport()` instance) via `.asBoundBridge`, instead of trying to conjure a ref out of
-// nothing:
-//
-//     extension SwiftCoroutinesExport {
-//         convenience init(rebinding donor: any CoroutinesExport) {
-//             self.init(__externalRCRefUnsafe: donor.__externalRCRef(), options: .asBoundBridge)
-//         }
-//     }
-//     let forced = SwiftCoroutinesExport(rebinding: coroutinesExport())
-//
-// This COMPILES. But it's not actually useful even if it didn't crash: `.asBoundBridge` binds a
-// *second*, independent Swift wrapper to a ref that's already wrapped by the object returned from
-// `coroutinesExport()`. Calling `forced.suspendFunction()` would only run OUR override *locally in
-// Swift* — passing `forced` back into a Kotlin function wouldn't route through it at all, since
-// Kotlin only ever sees the original native object and calls its own real implementation. So even
-// in the best case this is a cosmetic, local-only trick, not genuine two-way interop.
-//
-// It doesn't even get that far, though — it crashes immediately at runtime with a Kotlin/Native
-// runtime assertion:
-//
-//     runtime assert: Newly created Kotlin object for bound bridge type should never have an
-//     associated object. Please submit a bug report.
-//
-// The Kotlin/Native runtime enforces a strict 1:1 relationship between a native ref and its Swift
-// wrapper. `donor` already has one (the object `coroutinesExport()` returned); asking for a second,
-// independent wrapper class (`SwiftCoroutinesExport`) around that same ref violates that invariant
-// and aborts the process. There's no supported way around this — confirmed dead end.
+    if let result = try? await contract.suspendFunction() {
+        print("[cross-language inheritance] direct call -> \(result.value)")
+    }
+
+    // Works on Kotlin 2.4.20 (stable): prints "Kotlin saw: Hello from Swift" — Kotlin
+    // genuinely received the Swift object, cast it to `CoroutinesExport`, and called our override.
+    //
+    // On Kotlin 2.5.0-Beta1-73 (the version this whole project otherwise targets) the exact same
+    // code crashes the process instead:
+    //     Uncaught Kotlin exception: kotlin.ClassCastException: class SwiftCoroutinesExport
+    //     cannot be cast to class com.playground.CoroutinesExport
+    // So this looks like a regression in the 2.5.0 dev/beta channel, not a fundamental limitation.
+    if let result = try? await describeCoroutinesExport(contract: contract) {
+        print("[cross-language inheritance] \(result)")
+    }
+}
