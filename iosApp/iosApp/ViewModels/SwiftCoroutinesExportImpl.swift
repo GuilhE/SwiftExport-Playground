@@ -5,8 +5,8 @@ import KotlinToSwift
 /// 2.5.0-Beta2+ to subclass `KotlinBase` directly. Flow-returning members still delegate to a
 /// Kotlin-owned instance, since Swift can't author a cold `Flow` on its own.
 final class SwiftCoroutinesExportImpl: KotlinRuntime.KotlinBase, CoroutinesExport {
-    private let state = typedMutableStateFlow(initial: DataClass(value: "Hello from Swift!"))
-    private let kotlin = kotlinCoroutinesExportImpl()
+    private let state = CoroutinesExportProvider.shared.typedMutableStateFlow(initial: DataClass(value: "Hello from Swift!"))
+    private let kotlinFlows = CoroutinesExportProvider.shared.kotlinImpl()
 
     func observeStateFlow() -> any KotlinCoroutineSupport.KotlinTypedStateFlow<any KotlinToSwift.Data> {
         state
@@ -23,15 +23,15 @@ final class SwiftCoroutinesExportImpl: KotlinRuntime.KotlinBase, CoroutinesExpor
     }
 
     func createFlow() -> any KotlinCoroutineSupport.KotlinTypedFlow<any KotlinToSwift.Data> {
-        kotlin.createFlow()
+        kotlinFlows.createFlow()
     }
 
     func createCancelableFlow() -> any KotlinCoroutineSupport.KotlinTypedFlow<any KotlinToSwift.Data> {
-        kotlin.createCancelableFlow()
+        kotlinFlows.createCancelableFlow()
     }
 
     func cancelFlow() {
-        kotlin.cancelFlow()
+        kotlinFlows.cancelFlow()
     }
 }
 

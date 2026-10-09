@@ -10,9 +10,12 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
-    swiftExport {
-        moduleName = "KotlinToSwift"
-        flattenPackage = "com.playground"
+    export {
+        swift {
+            moduleName = "KotlinToSwift"
+            rootPackage = "com.playground"
+            xcodeIntegration()
+        }
     }
 
     sourceSets {

@@ -37,7 +37,7 @@ interface CoroutinesExport {
     fun cancelFlow()
 }
 
-internal class DefaultCoroutinesExport : CoroutinesExport {
+internal class CoroutinesExportImpl : CoroutinesExport {
     private val _stateFlow = MutableStateFlow<Data>(DataClass("Hello from the interface impl!"))
     private var flowJob: Job? = null
 
@@ -78,7 +78,9 @@ internal class DefaultCoroutinesExport : CoroutinesExport {
     }
 }
 
-fun kotlinCoroutinesExportImpl(): CoroutinesExport = DefaultCoroutinesExport()
+object CoroutinesExportProvider {
+    fun kotlinImpl(): CoroutinesExport = CoroutinesExportImpl()
 
-/** Monomorphic helper so Swift can get a real `MutableStateFlow<Data>` (generic functions aren't callable from Swift). */
-fun typedMutableStateFlow(initial: Data): MutableStateFlow<Data> = MutableStateFlow(initial)
+    /** Monomorphic helper so Swift can get a real `MutableStateFlow<Data>` (generic functions aren't callable from Swift). */
+    fun typedMutableStateFlow(initial: Data): MutableStateFlow<Data> = MutableStateFlow(initial)
+}
