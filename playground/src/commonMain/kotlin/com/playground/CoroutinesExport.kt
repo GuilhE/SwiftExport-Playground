@@ -78,9 +78,7 @@ internal class DefaultCoroutinesExport : CoroutinesExport {
     }
 }
 
-fun coroutinesExport(): CoroutinesExport = DefaultCoroutinesExport()
-
-suspend fun describeCoroutinesExport(contract: CoroutinesExport): String = "Kotlin saw: ${contract.suspendFunction().value}"
+fun kotlinCoroutinesExportImpl(): CoroutinesExport = DefaultCoroutinesExport()
 
 /** Monomorphic helper so Swift can get a real `MutableStateFlow<Data>` (generic functions aren't callable from Swift). */
-fun dataMutableStateFlow(initial: Data): MutableStateFlow<Data> = MutableStateFlow(initial)
+fun typedMutableStateFlow(initial: Data): MutableStateFlow<Data> = MutableStateFlow(initial)

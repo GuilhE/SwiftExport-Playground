@@ -21,7 +21,7 @@ final class CoroutinesViewModel {
     private var suppressedFailureIndices: Set<Int> = []
 
     init() {
-        coroutine = coroutinesExport()
+        coroutine = SwiftCoroutinesExportImpl()
     }
 
     func reset() {
