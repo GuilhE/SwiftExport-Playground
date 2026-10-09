@@ -80,9 +80,7 @@ internal class DefaultCoroutinesExport : CoroutinesExport {
 
 fun coroutinesExport(): CoroutinesExport = DefaultCoroutinesExport()
 
-/**
- * Open base class Swift can subclass to implement see https://kotlinlang.org/docs/native-swift-export.html#cross-language-inheritance).
- */
-open class SwiftBase
-
 suspend fun describeCoroutinesExport(contract: CoroutinesExport): String = "Kotlin saw: ${contract.suspendFunction().value}"
+
+/** Monomorphic helper so Swift can get a real `MutableStateFlow<Data>` (generic functions aren't callable from Swift). */
+fun dataMutableStateFlow(initial: Data): MutableStateFlow<Data> = MutableStateFlow(initial)

@@ -19,7 +19,7 @@ struct ContentView: View {
             }
             .navigationTitle("Kotlin SwiftExport")
             .navigationSubtitle("Coroutines → Swift concurrency")
-//            .task { await runCrossLanguageInheritanceProbe() }
+            .task { await runCrossLanguageInheritanceProbe() }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
