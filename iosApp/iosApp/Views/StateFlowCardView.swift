@@ -5,6 +5,9 @@ struct StateFlowCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            Text("Coroutines → Swift concurrency")
+                .font(.caption)
+                .foregroundColor(.secondary)
             HStack(spacing: 10) {
                 Button(action: {
                     Task { await viewModel.run(index: 0) }
