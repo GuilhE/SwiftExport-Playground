@@ -2,16 +2,17 @@ package com.playground
 
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 interface Ticker {
     suspend fun onTick(tick: Int): String
 }
 
 interface TickerControl {
-    fun observeEvents(): SharedFlow<Data>
+    fun observeEvents(): StateFlow<Data>
 
     suspend fun start()
 
@@ -21,19 +22,24 @@ interface TickerControl {
 internal class TickerControlImpl(
     private val ticker: Ticker,
 ) : TickerControl {
-    private val events = MutableSharedFlow<Data>(replay = 0, extraBufferCapacity = 1)
+    private val events = MutableStateFlow<Data>(DataImpl("Waiting for Kotlin…"))
 
-    override fun observeEvents(): SharedFlow<Data> = events.asSharedFlow()
+    override fun observeEvents(): StateFlow<Data> = events.asStateFlow()
 
     override suspend fun start() {
+        println("TickerControlImpl > start")
         var tick = 0
         while (true) {
             currentCoroutineContext().ensureActive()
-            events.emit(DataImpl(ticker.onTick(++tick)))
+            events.update {
+                DataImpl(ticker.onTick(++tick)).also {
+                    println("TickerControlImpl > onTick ${it.value}")
+                }
+            }
         }
     }
 
     override fun stop() {
-        events.tryEmit(DataImpl("Stopped"))
+        println("TickerControlImpl > stop")
     }
 }

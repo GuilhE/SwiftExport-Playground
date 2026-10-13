@@ -16,13 +16,14 @@ https://github.com/user-attachments/assets/0abd5a2e-d795-4b0a-b204-8e8aa9f29e96
   class` workaround to subclass instead of `KotlinBase` directly (2.4.x).
 - **No generics across the boundary.** A generic Kotlin function (e.g. `MutableStateFlow<T>(value)`) isn't callable from Swift — you need a
   monomorphic wrapper per concrete type.
-- **Swift can't author a Kotlin `Flow`.** No way to pass a `suspend` closure as a parameter, so Swift can only forward/wrap a `Flow` Kotlin
-  already owns, not build one from scratch. That's why `Ticker.onTick` returns a plain `String` instead of exposing a `Flow`.
 - **A `suspend` loop driven by the caller's `Task` needs its own cancellation checkpoint.** Cancelling the Swift `Task` running
-  `TickerControl.start()` doesn't stop the Kotlin loop by itself — without an explicit `ensureActive()` each iteration, it turned into a busy
-  loop pegging a CPU core forever.
-- **Mixing a one-shot signal into an observed `Flow` is a live race.** `TickerControl.stop()` writes `"Stopped"` into the same `Flow` the
-  ticks use; a tick already in flight can complete after and overwrite it, non-deterministically. Known, left as-is.
-- **`SharedFlow` doesn't survive repeated Swift `Task` cancel/restart cycles — `StateFlow` does.** Swapping `observeEvents()` to
-  `MutableSharedFlow(replay = 0)` stops new subscribers from getting the last value, but re-collecting it via `asAsyncSequence()` after the
-  first start/stop cycle silently delivers nothing from then on. `StateFlow` doesn't have this problem.
+  `TickerControl.start()` doesn't stop the Kotlin loop by itself — without an explicit `ensureActive()` each iteration, it turns into a busy
+  loop pegging a CPU core forever. Verified in `CancellationCheckpointTests`.
+
+## Validating these claims
+
+`iosApp/iosAppTests/` (target `SwiftExportValidationTests`) has a runnable XCTest for the claim above. Run it with:
+
+```
+xcodebuild test -project iosApp/SwiftExport.xcodeproj -scheme SwiftExportValidationTests -destination 'platform=iOS Simulator,name=iPhone 17'
+```

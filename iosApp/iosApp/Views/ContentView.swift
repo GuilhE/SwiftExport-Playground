@@ -23,19 +23,6 @@ struct ContentView: View {
                     KotlinInvokesSwiftCardView(viewModel: kotlinInvokesSwift)
                 }
             }
-            .task {
-                // TEMP PROBE for SharedFlow re-collection validation
-                for attempt in 1...10 {
-                    try? await Task.sleep(for: .seconds(1))
-                    print("PROBE[\(attempt)]: starting")
-                    kotlinInvokesSwift.start()
-                    try? await Task.sleep(for: .milliseconds(2500))
-                    print("PROBE[\(attempt)]: stopping")
-                    kotlinInvokesSwift.stop()
-                    try? await Task.sleep(for: .milliseconds(500))
-                    print("PROBE[\(attempt)]: emissions count = \(kotlinInvokesSwift.emissions.count), head = \(kotlinInvokesSwift.emissions.prefix(3))")
-                }
-            }
             .navigationTitle("Kotlin SwiftExport")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
