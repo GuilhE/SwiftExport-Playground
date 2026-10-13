@@ -11,7 +11,7 @@ final class SwiftTicker: KotlinBase, Ticker {
 
 @MainActor
 @Observable
-final class KotlinInvokesSwiftViewModel {
+final class CrossInheritanceViewModel {
     private let control: any TickerControl
     private var runTask: Task<Void, Never>?
 

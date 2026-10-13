@@ -16,14 +16,3 @@ https://github.com/user-attachments/assets/0abd5a2e-d795-4b0a-b204-8e8aa9f29e96
   class` workaround to subclass instead of `KotlinBase` directly (2.4.x).
 - **No generics across the boundary.** A generic Kotlin function (e.g. `MutableStateFlow<T>(value)`) isn't callable from Swift — you need a
   monomorphic wrapper per concrete type.
-- **A `suspend` loop driven by the caller's `Task` needs its own cancellation checkpoint.** Cancelling the Swift `Task` running
-  `TickerControl.start()` doesn't stop the Kotlin loop by itself — without an explicit `ensureActive()` each iteration, it turns into a busy
-  loop pegging a CPU core forever. Verified in `CancellationCheckpointTests`.
-
-## Validating these claims
-
-`iosApp/iosAppTests/` (target `SwiftExportValidationTests`) has a runnable XCTest for the claim above. Run it with:
-
-```
-xcodebuild test -project iosApp/SwiftExport.xcodeproj -scheme SwiftExportValidationTests -destination 'platform=iOS Simulator,name=iPhone 17'
-```

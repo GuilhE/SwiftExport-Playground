@@ -2,25 +2,23 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var coroutinesViewModel = CoroutinesViewModel()
-    @State private var downloadViewModel = DownloadStateViewModel()
-    @State private var kotlinInvokesSwift = KotlinInvokesSwiftViewModel()
+    @State private var sealedClassesViewModel = SealedClassesViewModel()
+    @State private var crossInheritanceViewModel = CrossInheritanceViewModel()
 
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 15) {
                     SectionHeader(title: "Coroutines")
-                    StateFlowCardView(viewModel: coroutinesViewModel)
-
-                    ForEach(1..<4, id: \.self) { index in
-                        CoroutineCardView(index: index, viewModel: coroutinesViewModel)
+                    ForEach(0..<4, id: \.self) { index in
+                        CoroutinesView(index: index, viewModel: coroutinesViewModel)
                     }
 
                     SectionHeader(title: "Sealed classes")
-                    SealedClassesCardView(viewModel: downloadViewModel)
+                    SealedClassesView(viewModel: sealedClassesViewModel)
 
                     SectionHeader(title: "Cross inheritance")
-                    KotlinInvokesSwiftCardView(viewModel: kotlinInvokesSwift)
+                    CrossInheritanceView(viewModel: crossInheritanceViewModel)
                 }
             }
             .navigationTitle("Kotlin SwiftExport")
@@ -28,8 +26,8 @@ struct ContentView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         coroutinesViewModel.reset()
-                        downloadViewModel.reset()
-                        kotlinInvokesSwift.reset()
+                        sealedClassesViewModel.reset()
+                        crossInheritanceViewModel.reset()
                     }) {
                         Image(systemName: "trash").foregroundColor(.red)
                     }

@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct KotlinInvokesSwiftCardView: View {
-    let viewModel: KotlinInvokesSwiftViewModel
+struct CrossInheritanceView: View {
+    let viewModel: CrossInheritanceViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {

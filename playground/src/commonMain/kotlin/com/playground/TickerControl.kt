@@ -1,11 +1,10 @@
 package com.playground
 
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.cancellable
+import kotlinx.coroutines.flow.flow
 
 interface Ticker {
     suspend fun onTick(tick: Int): String
@@ -29,14 +28,15 @@ internal class TickerControlImpl(
     override suspend fun start() {
         println("TickerControlImpl > start")
         var tick = 0
-        while (true) {
-            currentCoroutineContext().ensureActive()
-            events.update {
-                DataImpl(ticker.onTick(++tick)).also {
-                    println("TickerControlImpl > onTick ${it.value}")
-                }
+        flow {
+            while (true) {
+                emit(DataImpl(ticker.onTick(++tick)))
             }
-        }
+        }.cancellable()
+            .collect { data ->
+                println("TickerControlImpl > onTick ${data.value}")
+                events.value = data
+            }
     }
 
     override fun stop() {
