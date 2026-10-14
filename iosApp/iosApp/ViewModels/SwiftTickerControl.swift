@@ -8,26 +8,40 @@ import os
 private typealias StateFlow = ExportedKotlinPackages.kotlinx.coroutines.flow.StateFlow
 private typealias FlowCollector = ExportedKotlinPackages.kotlinx.coroutines.flow.FlowCollector
 
-private final class SwiftStateFlowImpl: KotlinBase, StateFlow {
-    private let hub: TickerEventsHub
+private final class SwiftStateFlowImpl: KotlinBase, StateFlow, @unchecked Sendable {
+    private struct State {
+        var current: any KotlinToSwift.Data
+        var subscribers: [UUID: AsyncStream<any KotlinToSwift.Data>.Continuation] = [:]
+    }
+
+    private let lock: OSAllocatedUnfairLock<State>
 
     init(initial: any KotlinToSwift.Data) {
-        hub = TickerEventsHub(initial: initial)
+        lock = OSAllocatedUnfairLock(initialState: State(current: initial))
         super.init()
     }
 
     var value: (any KotlinRuntimeSupport._KotlinBridgeable)? {
-        hub.value
+        lock.withLock { $0.current }
     }
 
     var replayCache: [(any KotlinRuntimeSupport._KotlinBridgeable)?] {
-        [hub.value]
+        [lock.withLock { $0.current }]
     }
 
-    // Kotlin's SharedFlow.collect returns Nothing, bound here as `-> Never`, but the base Flow
-    // protocol still separately requires `-> Void`; one overload per requirement satisfies both.
+    /// Kotlin's SharedFlow.collect returns Nothing, bound here as `-> Never`, but the base Flow
+    /// protocol still separately requires `-> Void`; one overload per requirement satisfies both.
     func collect(collector: any FlowCollector) async throws -> Never {
-        for await data in hub.subscribe() {
+        let id = UUID()
+        let (stream, continuation) = AsyncStream<any KotlinToSwift.Data>.makeStream()
+        lock.withLock { state in
+            continuation.yield(state.current)
+            state.subscribers[id] = continuation
+        }
+        continuation.onTermination = { [weak self] _ in
+            _ = self?.lock.withLock { $0.subscribers.removeValue(forKey: id) }
+        }
+        for await data in stream {
             try await collector.emit(value: data)
         }
         throw CancellationError()
@@ -38,27 +52,6 @@ private final class SwiftStateFlowImpl: KotlinBase, StateFlow {
     }
 
     func update(_ newValue: any KotlinToSwift.Data) {
-        hub.update(newValue)
-    }
-}
-
-private final class TickerEventsHub: @unchecked Sendable {
-    private struct State {
-        var current: any KotlinToSwift.Data
-        var subscribers: [UUID: AsyncStream<any KotlinToSwift.Data>.Continuation] = [:]
-    }
-
-    private let lock: OSAllocatedUnfairLock<State>
-
-    init(initial: any KotlinToSwift.Data) {
-        lock = OSAllocatedUnfairLock(initialState: State(current: initial))
-    }
-
-    var value: any KotlinToSwift.Data {
-        lock.withLock { $0.current }
-    }
-
-    func update(_ newValue: any KotlinToSwift.Data) {
         let continuations: [AsyncStream<any KotlinToSwift.Data>.Continuation] = lock.withLock { state in
             state.current = newValue
             return Array(state.subscribers.values)
@@ -66,19 +59,6 @@ private final class TickerEventsHub: @unchecked Sendable {
         for continuation in continuations {
             continuation.yield(newValue)
         }
-    }
-
-    func subscribe() -> AsyncStream<any KotlinToSwift.Data> {
-        let id = UUID()
-        let (stream, continuation) = AsyncStream<any KotlinToSwift.Data>.makeStream()
-        lock.withLock { state in
-            continuation.yield(state.current)
-            state.subscribers[id] = continuation
-        }
-        continuation.onTermination = { [weak self] _ in
-            _ = self?.lock.withLock { $0.subscribers.removeValue(forKey: id) }
-        }
-        return stream
     }
 }
 
@@ -103,7 +83,9 @@ final class SwiftTickerControl: KotlinBase, TickerControl {
     private let stateFlow: SwiftStateFlowImpl = .init(initial: SwiftDataImpl("Waiting for Swift…"))
     private let stopped = OSAllocatedUnfairLock(initialState: false)
 
-    private var isStopped: Bool { stopped.withLock { $0 } }
+    private var isStopped: Bool {
+        stopped.withLock { $0 }
+    }
 
     func observeEvents() -> any KotlinTypedStateFlow<any KotlinToSwift.Data> {
         _KotlinTypedStateFlowImpl<any KotlinToSwift.Data>.create(stateFlow, KotlinToSwift.Data.self)
@@ -113,9 +95,9 @@ final class SwiftTickerControl: KotlinBase, TickerControl {
         stopped.withLock { $0 = false }
         var tick: Int32 = 0
         while !isStopped {
-            guard !isStopped else { break }
             tick += 1
             let text = try await ticker.onTick(tick: tick)
+            guard !isStopped else { break }
             stateFlow.update(SwiftDataImpl(text))
         }
     }
