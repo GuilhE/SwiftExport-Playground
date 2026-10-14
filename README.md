@@ -9,6 +9,10 @@ https://github.com/user-attachments/assets/0abd5a2e-d795-4b0a-b204-8e8aa9f29e96
 - **Cross inheritance** — Swift implements a minimal Kotlin interface (`Ticker.onTick`, cross-language inheritance) that Kotlin's `TickerControl`
   calls in a loop; the pacing between calls is genuine Swift concurrency (`Task.sleep`). iOS controls the loop's lifecycle (start/cancel) while Kotlin owns the resulting
   `StateFlow<Data>`, exposed via `observeEvents()`.
+- **Reverse cross inheritance** — the mirror of the section above: Swift authors *both* `Ticker` and `TickerControl` end-to-end, including a
+  hand-rolled `StateFlow<Data>` (cross-inherited `collect`/`value`/`replayCache`, backed by a lock-protected multicast hub with one
+  `AsyncStream` per subscriber). Kotlin's only involvement is a top-level `driveTickerControl(control:)` function that calls `start()` and
+  collects `observeEvents()` — proving genuine Kotlin→Swift calls against an interface graph entirely implemented in Swift.
 
 ## Limitations
 

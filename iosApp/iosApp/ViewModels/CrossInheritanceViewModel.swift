@@ -1,8 +1,9 @@
 import KotlinRuntime
 @preconcurrency import KotlinToSwift
 import Observation
+import SwiftUI
 
-final class SwiftTicker: KotlinBase, Ticker {
+private final class SwiftTicker: KotlinBase, Ticker {
     func onTick(tick: Int32) async -> String {
         try? await Task.sleep(for: .seconds(1))
         return "Kotlin invoked Swift: tick #\(tick)"
@@ -24,7 +25,7 @@ final class CrossInheritanceViewModel {
 
     func start() {
         guard !isRunning else { return }
-        isRunning = true
+        withAnimation(.easeInOut) { isRunning = true }
         runTask = Task {
             async let drive: Void = control.start()
             async let observe: Void = observeEvents()
@@ -34,7 +35,7 @@ final class CrossInheritanceViewModel {
     }
 
     func stop() {
-        isRunning = false
+        withAnimation(.easeInOut) { isRunning = false }
         control.stop()
         runTask?.cancel()
         runTask = nil
@@ -51,7 +52,6 @@ final class CrossInheritanceViewModel {
                 emissions.insert(value.value, at: 0)
             }
         } catch is CancellationError {
-            // Expected when `stop()` cancels this task.
         } catch {
             emissions.insert("Failed with: \(error)", at: 0)
         }

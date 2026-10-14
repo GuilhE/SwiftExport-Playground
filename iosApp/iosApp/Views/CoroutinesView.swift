@@ -6,7 +6,7 @@ struct CoroutinesView: View {
 
     private var title: String {
         switch index {
-        case 0: "StateFlow (observe)"
+        case 0: "Flow"
         case 1: "suspend fun (2s delay)"
         case 2: "Flow (restart-collect)"
         case 3: "Flow (infinite spawn)"

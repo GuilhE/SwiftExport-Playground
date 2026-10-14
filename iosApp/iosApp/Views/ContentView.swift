@@ -4,30 +4,91 @@ struct ContentView: View {
     @State private var coroutinesViewModel = CoroutinesViewModel()
     @State private var sealedClassesViewModel = SealedClassesViewModel()
     @State private var crossInheritanceViewModel = CrossInheritanceViewModel()
+    @State private var reverseCrossInheritanceViewModel = ReverseCrossInheritanceViewModel()
+
+    var body: some View {
+        TabView {
+            CoroutinesTab(viewModel: coroutinesViewModel)
+                .tabItem { Label("Coroutines", systemImage: "arrow.triangle.2.circlepath") }
+
+            SealedClassesTab(viewModel: sealedClassesViewModel)
+                .tabItem { Label("Sealed classes", systemImage: "list.bullet") }
+
+            InheritanceTab(
+                crossInheritanceViewModel: crossInheritanceViewModel,
+                reverseCrossInheritanceViewModel: reverseCrossInheritanceViewModel
+            )
+            .tabItem { Label("Inheritance", systemImage: "arrow.left.arrow.right") }
+        }
+    }
+}
+
+private struct CoroutinesTab: View {
+    let viewModel: CoroutinesViewModel
 
     var body: some View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 15) {
-                    SectionHeader(title: "Coroutines")
-                    ForEach(0..<4, id: \.self) { index in
-                        CoroutinesView(index: index, viewModel: coroutinesViewModel)
+                    ForEach(0 ..< 4, id: \.self) { index in
+                        CoroutinesView(index: index, viewModel: viewModel)
                     }
-
-                    SectionHeader(title: "Sealed classes")
-                    SealedClassesView(viewModel: sealedClassesViewModel)
-
-                    SectionHeader(title: "Cross inheritance")
-                    CrossInheritanceView(viewModel: crossInheritanceViewModel)
                 }
             }
-            .navigationTitle("Kotlin SwiftExport")
+            .navigationTitle("Coroutines")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { viewModel.reset() }) {
+                        Image(systemName: "trash").foregroundColor(.red)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct SealedClassesTab: View {
+    let viewModel: SealedClassesViewModel
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                SealedClassesView(viewModel: viewModel)
+                    .padding(.top)
+            }
+            .navigationTitle("Sealed classes")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: { viewModel.reset() }) {
+                        Image(systemName: "trash").foregroundColor(.red)
+                    }
+                }
+            }
+        }
+    }
+}
+
+private struct InheritanceTab: View {
+    let crossInheritanceViewModel: CrossInheritanceViewModel
+    let reverseCrossInheritanceViewModel: ReverseCrossInheritanceViewModel
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 15) {
+                    SectionHeader(title: "Cross inheritance")
+                    CrossInheritanceView(viewModel: crossInheritanceViewModel)
+
+                    SectionHeader(title: "Reverse cross inheritance")
+                    ReverseCrossInheritanceView(viewModel: reverseCrossInheritanceViewModel)
+                }
+            }
+            .navigationTitle("Inheritance")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
-                        coroutinesViewModel.reset()
-                        sealedClassesViewModel.reset()
                         crossInheritanceViewModel.reset()
+                        reverseCrossInheritanceViewModel.reset()
                     }) {
                         Image(systemName: "trash").foregroundColor(.red)
                     }

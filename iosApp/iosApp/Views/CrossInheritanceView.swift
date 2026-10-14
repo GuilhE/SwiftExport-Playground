@@ -5,7 +5,7 @@ struct CrossInheritanceView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Kotlin → calls Swift implementation")
+            Text("Kotlin → calls Swift minor implementation")
                 .font(.caption)
                 .foregroundColor(.secondary)
 
