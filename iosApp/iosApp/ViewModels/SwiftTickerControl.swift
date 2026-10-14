@@ -24,6 +24,8 @@ private final class SwiftStateFlowImpl: KotlinBase, StateFlow {
         [hub.value]
     }
 
+    // Kotlin's SharedFlow.collect returns Nothing, bound here as `-> Never`, but the base Flow
+    // protocol still separately requires `-> Void`; one overload per requirement satisfies both.
     func collect(collector: any FlowCollector) async throws -> Never {
         for await data in hub.subscribe() {
             try await collector.emit(value: data)
@@ -101,25 +103,24 @@ final class SwiftTickerControl: KotlinBase, TickerControl {
     private let stateFlow: SwiftStateFlowImpl = .init(initial: SwiftDataImpl("Waiting for Swift…"))
     private let stopped = OSAllocatedUnfairLock(initialState: false)
 
+    private var isStopped: Bool { stopped.withLock { $0 } }
+
     func observeEvents() -> any KotlinTypedStateFlow<any KotlinToSwift.Data> {
         _KotlinTypedStateFlowImpl<any KotlinToSwift.Data>.create(stateFlow, KotlinToSwift.Data.self)
     }
 
     func start() async throws {
-        // print("SwiftTickerControl > start")
         stopped.withLock { $0 = false }
         var tick: Int32 = 0
-        while !stopped.withLock({ $0 }) {
+        while !isStopped {
+            guard !isStopped else { break }
             tick += 1
             let text = try await ticker.onTick(tick: tick)
-            guard !stopped.withLock({ $0 }) else { break }
-            // print("SwiftTickerControl > onTick \(text)")
             stateFlow.update(SwiftDataImpl(text))
         }
     }
 
     func stop() {
-        // print("SwiftTickerControl > stop")
         stopped.withLock { $0 = true }
     }
 }

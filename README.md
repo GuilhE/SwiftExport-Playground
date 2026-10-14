@@ -12,7 +12,8 @@ https://github.com/user-attachments/assets/0abd5a2e-d795-4b0a-b204-8e8aa9f29e96
 - **Reverse cross inheritance** — the mirror of the section above: Swift authors *both* `Ticker` and `TickerControl` end-to-end, including a
   hand-rolled `StateFlow<Data>` (cross-inherited `collect`/`value`/`replayCache`, backed by a lock-protected multicast hub with one
   `AsyncStream` per subscriber). Kotlin's only involvement is a top-level `driveTickerControl(control:)` function that calls `start()` and
-  collects `observeEvents()` — proving genuine Kotlin→Swift calls against an interface graph entirely implemented in Swift.
+  collects `observeEvents()`. Note: like a real `StateFlow`, this hand-rolled one always replays the current value to a new subscriber
+  before any live updates.
 
 ## Limitations
 
