@@ -1,7 +1,7 @@
 import SwiftUI
 
-struct SealedClassesCardView: View {
-    let viewModel: DownloadStateViewModel
+struct SealedClassesView: View {
+    let viewModel: SealedClassesViewModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {

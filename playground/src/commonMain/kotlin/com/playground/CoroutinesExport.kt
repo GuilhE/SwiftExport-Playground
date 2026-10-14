@@ -13,15 +13,9 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-class UpsException : Exception("Ups! Something went wrong.")
-
 interface Data {
     val value: String
 }
-
-data class DataClass(
-    override val value: String,
-) : Data
 
 interface CoroutinesExport {
     fun observeStateFlow(): StateFlow<Data>
@@ -37,37 +31,43 @@ interface CoroutinesExport {
     fun cancelFlow()
 }
 
+class UpsException : Exception("Ups! Something went wrong.")
+
+internal data class DataImpl(
+    override val value: String,
+) : Data
+
 internal class CoroutinesExportImpl : CoroutinesExport {
-    private val _stateFlow = MutableStateFlow<Data>(DataClass("Hello from the interface impl!"))
+    private val _stateFlow = MutableStateFlow<Data>(DataImpl("Hello from Kotlin!"))
     private var flowJob: Job? = null
 
     override fun observeStateFlow(): StateFlow<Data> = _stateFlow.asStateFlow()
 
     override fun updateStateFlow(newValue: String) {
-        _stateFlow.value = DataClass(newValue)
+        _stateFlow.value = DataImpl(newValue)
     }
 
-    override suspend fun suspendFunction(): DataClass {
+    override suspend fun suspendFunction(): Data {
         delay(2000.milliseconds)
         return if ((0..1).random() < 0.5) {
-            DataClass("Hello from suspend fun")
+            DataImpl("Hello from Kotlin's suspend fun")
         } else {
             throw UpsException()
         }
     }
 
-    override fun createFlow(): Flow<DataClass> =
+    override fun createFlow(): Flow<Data> =
         flow {
-            emit(DataClass("Hello!"))
+            emit(DataImpl("Hello!"))
             delay(1000.milliseconds)
-            emit(DataClass("SwiftExport"))
+            emit(DataImpl("SwiftExport"))
             delay(1000.milliseconds)
-            emit(DataClass("Interface-based"))
+            emit(DataImpl("Interface-based"))
             delay(1000.milliseconds)
-            emit(DataClass("Flows are here!"))
+            emit(DataImpl("Flows are here!"))
         }
 
-    override fun createCancelableFlow(): Flow<DataClass> {
+    override fun createCancelableFlow(): Flow<Data> {
         cancelFlow()
         return channelFlow { flowJob = launch { createFlow().collect { value -> send(value) } } }
     }
@@ -76,11 +76,4 @@ internal class CoroutinesExportImpl : CoroutinesExport {
         flowJob?.cancel()
         flowJob = null
     }
-}
-
-object CoroutinesExportProvider {
-    fun kotlinImpl(): CoroutinesExport = CoroutinesExportImpl()
-
-    /** Monomorphic helper so Swift can get a real `MutableStateFlow<Data>` (generic functions aren't callable from Swift). */
-    fun typedMutableStateFlow(initial: Data): MutableStateFlow<Data> = MutableStateFlow(initial)
 }

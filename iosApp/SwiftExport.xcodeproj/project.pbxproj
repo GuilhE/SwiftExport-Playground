@@ -47,12 +47,28 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6422025C96541639629ADA34 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		6725B9FDAE4C34860784D1DF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6422025C96541639629ADA34 /* iOS */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		B9DA97A82DC1472C00A4DA20 = {
 			isa = PBXGroup;
 			children = (
 				B9DA98002DC14AA900A4DA20 /* Configuration */,
 				B9DA97B32DC1472C00A4DA20 /* iosApp */,
 				B9DA97B22DC1472C00A4DA20 /* Products */,
+				6725B9FDAE4C34860784D1DF /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -84,8 +100,6 @@
 				B9DA97B32DC1472C00A4DA20 /* iosApp */,
 			);
 			name = SwiftExport;
-			packageProductDependencies = (
-			);
 			productName = iosApp;
 			productReference = B9DA97B12DC1472C00A4DA20 /* SwiftExport.app */;
 			productType = "com.apple.product-type.application";

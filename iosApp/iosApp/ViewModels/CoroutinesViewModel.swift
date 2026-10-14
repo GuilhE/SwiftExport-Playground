@@ -21,7 +21,7 @@ final class CoroutinesViewModel {
     private var suppressedFailureIndices: Set<Int> = []
 
     init() {
-        coroutine = SwiftCoroutinesExportImpl()
+        coroutine = DiProvider.shared.kotlinImpl()
     }
 
     func reset() {

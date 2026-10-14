@@ -4,7 +4,7 @@ import SwiftUI
 
 @MainActor
 @Observable
-final class DownloadStateViewModel {
+final class SealedClassesViewModel {
     var current: any DownloadState = idleDownloadState()
     var log: [String] = []
 
