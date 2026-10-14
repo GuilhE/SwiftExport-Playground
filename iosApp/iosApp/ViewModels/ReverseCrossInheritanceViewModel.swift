@@ -20,7 +20,7 @@ final class ReverseCrossInheritanceViewModel {
 
     func start() {
         guard !isRunning else { return }
-        withAnimation(.easeInOut) { isRunning = true }
+        animated { isRunning = true }
         runTask = Task {
             async let start: Void = startTickerControl()
             async let observe: Void = observeEvents()
@@ -30,7 +30,7 @@ final class ReverseCrossInheritanceViewModel {
     }
 
     func stop() {
-        withAnimation(.easeInOut) { isRunning = false }
+        animated { isRunning = false }
         control.stop()
         runTask?.cancel()
         runTask = nil
@@ -38,7 +38,7 @@ final class ReverseCrossInheritanceViewModel {
 
     func reset() {
         stop()
-        emissions = []
+        animated { emissions = [] }
     }
 
     private func startTickerControl() async {
@@ -46,18 +46,22 @@ final class ReverseCrossInheritanceViewModel {
             try await DiProvider.shared.startTickerControl(control: control)
         } catch is CancellationError {
         } catch {
-            emissions.insert("Kotlin driver failed with: \(error)", at: 0)
+            animated { emissions.append("Kotlin driver failed with: \(error)") }
         }
     }
 
     private func observeEvents() async {
         do {
             for try await value in control.observeEvents().asAsyncSequence() {
-                emissions.insert(value.value, at: 0)
+                animated { emissions.append(value.value) }
             }
         } catch is CancellationError {
         } catch {
-            emissions.insert("Failed with: \(error)", at: 0)
+            animated { emissions.append("Failed with: \(error)") }
         }
+    }
+
+    private func animated(_ mutation: () -> Void) {
+        withAnimation(.easeInOut, mutation)
     }
 }

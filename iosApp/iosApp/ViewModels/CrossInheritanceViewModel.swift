@@ -25,7 +25,7 @@ final class CrossInheritanceViewModel {
 
     func start() {
         guard !isRunning else { return }
-        withAnimation(.easeInOut) { isRunning = true }
+        animated { isRunning = true }
         runTask = Task {
             async let drive: Void = control.start()
             async let observe: Void = observeEvents()
@@ -35,7 +35,7 @@ final class CrossInheritanceViewModel {
     }
 
     func stop() {
-        withAnimation(.easeInOut) { isRunning = false }
+        animated { isRunning = false }
         control.stop()
         runTask?.cancel()
         runTask = nil
@@ -43,17 +43,21 @@ final class CrossInheritanceViewModel {
 
     func reset() {
         stop()
-        emissions = []
+        animated { emissions = [] }
     }
 
     private func observeEvents() async {
         do {
             for try await value in control.observeEvents().asAsyncSequence() {
-                emissions.insert(value.value, at: 0)
+                animated { emissions.append(value.value) }
             }
         } catch is CancellationError {
         } catch {
-            emissions.insert("Failed with: \(error)", at: 0)
+            animated { emissions.append("Failed with: \(error)") }
         }
+    }
+
+    private func animated(_ mutation: () -> Void) {
+        withAnimation(.easeInOut, mutation)
     }
 }
