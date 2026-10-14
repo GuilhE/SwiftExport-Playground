@@ -1,8 +1,8 @@
 # SwiftExport playground
 
-<img width="300" height="654" alt="1" src="https://github.com/user-attachments/assets/3be4678c-4354-47cb-aa8c-b0d1cb3b6ed8" />
-<img width="300" height="652" alt="2" src="https://github.com/user-attachments/assets/e6d7e666-08a7-4ee7-a8fe-5a1984147a71" />
-<img width="300" height="652" alt="3" src="https://github.com/user-attachments/assets/ab8431e8-695b-409a-8a76-0dd80a173439" />
+<img width="250" src="https://github.com/user-attachments/assets/3be4678c-4354-47cb-aa8c-b0d1cb3b6ed8" />
+<img width="250" src="https://github.com/user-attachments/assets/e6d7e666-08a7-4ee7-a8fe-5a1984147a71" />
+<img width="250" src="https://github.com/user-attachments/assets/ab8431e8-695b-409a-8a76-0dd80a173439" />
 
 
 ## What's here
