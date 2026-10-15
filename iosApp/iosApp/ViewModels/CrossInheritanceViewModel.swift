@@ -6,7 +6,7 @@ import SwiftUI
 private final class SwiftTicker: KotlinBase, Ticker {
     func onTick(tick: Int32) async -> String {
         try? await Task.sleep(for: .seconds(1))
-        return "Kotlin invoked Swift: tick #\(tick)"
+        return "Swift tick #\(tick)"
     }
 }
 
@@ -42,7 +42,6 @@ final class CrossInheritanceViewModel {
     }
 
     func reset() {
-        stop()
         animated { emissions = [] }
     }
 

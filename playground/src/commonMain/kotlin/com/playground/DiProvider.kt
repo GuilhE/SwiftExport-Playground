@@ -17,13 +17,13 @@ object DiProvider {
                     control
                         .observeEvents()
                         .collect { data ->
-                            println("TickerControl > observed ${data.value}")
+                            println("Swift TickerControl > collected ${data.value}")
                         }
                 }
             job.invokeOnCompletion { cause ->
-                if (cause is CancellationException) println("TickerControl > observe cancelled")
+                if (cause is CancellationException) println("Swift TickerControl > OnCompletion called")
             }
-            println("TickerControl > start")
+            println("Swift TickerControl > start")
             control.start()
         }
 }

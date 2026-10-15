@@ -8,7 +8,7 @@ import os
 private typealias StateFlow = ExportedKotlinPackages.kotlinx.coroutines.flow.StateFlow
 private typealias FlowCollector = ExportedKotlinPackages.kotlinx.coroutines.flow.FlowCollector
 
-private final class SwiftStateFlowImpl: KotlinBase, StateFlow, @unchecked Sendable {
+private final class SwiftStateFlow: KotlinBase, StateFlow, @unchecked Sendable {
     private struct State {
         var current: any KotlinToSwift.Data
         var subscribers: [UUID: AsyncStream<any KotlinToSwift.Data>.Continuation] = [:]
@@ -65,11 +65,11 @@ private final class SwiftStateFlowImpl: KotlinBase, StateFlow, @unchecked Sendab
 private final class SwiftTicker: KotlinBase, Ticker {
     func onTick(tick: Int32) async -> String {
         try? await Task.sleep(for: .seconds(1))
-        return "Swift drives itself: tick #\(tick)"
+        return "Swift tick #\(tick)"
     }
 }
 
-private final class SwiftDataImpl: KotlinBase, KotlinToSwift.Data {
+private final class SwiftData: KotlinBase, KotlinToSwift.Data {
     let value: String
 
     init(_ value: String) {
@@ -80,7 +80,7 @@ private final class SwiftDataImpl: KotlinBase, KotlinToSwift.Data {
 
 final class SwiftTickerControl: KotlinBase, TickerControl {
     private let ticker: Ticker = SwiftTicker()
-    private let stateFlow: SwiftStateFlowImpl = .init(initial: SwiftDataImpl("Waiting for Swift…"))
+    private let stateFlow: SwiftStateFlow = .init(initial: SwiftData("Waiting for Swift…"))
     private let stopped = OSAllocatedUnfairLock(initialState: false)
 
     private var isStopped: Bool {
@@ -98,7 +98,7 @@ final class SwiftTickerControl: KotlinBase, TickerControl {
             tick += 1
             let text = try await ticker.onTick(tick: tick)
             guard !isStopped else { break }
-            stateFlow.update(SwiftDataImpl(text))
+            stateFlow.update(SwiftData(text))
         }
     }
 

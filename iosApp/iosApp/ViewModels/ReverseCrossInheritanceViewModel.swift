@@ -37,7 +37,6 @@ final class ReverseCrossInheritanceViewModel {
     }
 
     func reset() {
-        stop()
         animated { emissions = [] }
     }
 
@@ -46,7 +45,7 @@ final class ReverseCrossInheritanceViewModel {
             try await DiProvider.shared.startTickerControl(control: control)
         } catch is CancellationError {
         } catch {
-            animated { emissions.append("Kotlin driver failed with: \(error)") }
+            animated { emissions.append("Failed with: \(error)") }
         }
     }
 

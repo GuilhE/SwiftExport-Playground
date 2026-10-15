@@ -26,7 +26,7 @@ internal class TickerControlImpl(
     override fun observeEvents(): StateFlow<Data> = events.asStateFlow()
 
     override suspend fun start() {
-        println("TickerControlImpl > start")
+        println("Kotlin TickerControl > start")
         var tick = 0
         flow {
             while (true) {
@@ -34,12 +34,12 @@ internal class TickerControlImpl(
             }
         }.cancellable()
             .collect { data ->
-                println("TickerControlImpl > onTick ${data.value}")
+                println("Kotlin TickerControl > onTick ${data.value}")
                 events.value = data
             }
     }
 
     override fun stop() {
-        println("TickerControlImpl > stop")
+        println("Kotlin TickerControl > stop")
     }
 }
