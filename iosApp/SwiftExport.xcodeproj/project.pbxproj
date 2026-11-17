@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		29085775F1B16BBC8DC26D98 /* DemoTourUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D386C3A9B3FE13F994EEBDE /* DemoTourUITests.swift */; };
+		5C03DA0830AB0F2F0083C72C /* KotlinToSwiftLibrary in Frameworks */ = {isa = PBXBuildFile; productRef = 5C03DA0730AB0F2F0083C72C /* KotlinToSwiftLibrary */; };
 		B7AE68AC4E89E12EDF3B08C2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 48020CE8954304E0FB8FBF15 /* Foundation.framework */; };
 /* End PBXBuildFile section */
 
@@ -49,8 +50,6 @@
 		};
 		B9DA98002DC14AA900A4DA20 /* Configuration */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = Configuration;
 			sourceTree = "<group>";
 		};
@@ -61,6 +60,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5C03DA0830AB0F2F0083C72C /* KotlinToSwiftLibrary in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,7 +96,6 @@
 			children = (
 				3D386C3A9B3FE13F994EEBDE /* DemoTourUITests.swift */,
 			);
-			name = iosAppUITests;
 			path = iosAppUITests;
 			sourceTree = "<group>";
 		};
@@ -140,6 +139,9 @@
 				B9DA97B32DC1472C00A4DA20 /* iosApp */,
 			);
 			name = SwiftExport;
+			packageProductDependencies = (
+				5C03DA0730AB0F2F0083C72C /* KotlinToSwiftLibrary */,
+			);
 			productName = iosApp;
 			productReference = B9DA97B12DC1472C00A4DA20 /* SwiftExport.app */;
 			productType = "com.apple.product-type.application";
@@ -186,6 +188,9 @@
 			);
 			mainGroup = B9DA97A82DC1472C00A4DA20;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				5C03DA0630AB0F2F0083C72C /* XCLocalSwiftPackageReference "../playground/SwiftPackage/KotlinToSwift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B9DA97B22DC1472C00A4DA20 /* Products */;
 			projectDirPath = "";
@@ -232,7 +237,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\n./gradlew :playground:embedSwiftExportForXcode\n";
+			shellScript = "cd \"$SRCROOT/..\"\n./gradlew \":playground:exportFrameworkForXcode\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -512,6 +517,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		5C03DA0630AB0F2F0083C72C /* XCLocalSwiftPackageReference "../playground/SwiftPackage/KotlinToSwift" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../playground/SwiftPackage/KotlinToSwift;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		5C03DA0730AB0F2F0083C72C /* KotlinToSwiftLibrary */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = KotlinToSwiftLibrary;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B9DA97A92DC1472C00A4DA20 /* Project object */;
 }
